@@ -5,9 +5,6 @@ import com.franmontiel.persistentcookiejar.PersistentCookieJar
 import com.franmontiel.persistentcookiejar.cache.CookieCache
 import com.franmontiel.persistentcookiejar.cache.SetCookieCache
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
-import com.fz.networklog.HttpLoggingInterceptor
-import com.fz.networklog.NetLoggingInterceptor
-import com.fz.networklog.NetLoggingInterceptor.OnDynamicParamCallback
 import com.fz.okhttp.interceptor.TimeoutInterceptor
 import okhttp3.*
 import okhttp3.EventListener
@@ -63,7 +60,6 @@ class OkHttpWrapper {
     val networkInterceptors: MutableList<Interceptor> = ArrayList()
     private var interceptors: MutableList<Interceptor>? = ArrayList()
     private var certsData: List<ByteArray>? = null
-    private var isEnabledHttpLog = false
     private var securityInterceptor: Interceptor? = null
     private var responseCacheInterceptor: Interceptor? = null
     private var cachePath: String? = null
@@ -82,7 +78,6 @@ class OkHttpWrapper {
         mCookies = other.mCookies
         interceptors = other.interceptors
         certsData = other.certsData
-        isEnabledHttpLog = other.isEnabledHttpLog
         securityInterceptor = other.securityInterceptor
         responseCacheInterceptor = other.responseCacheInterceptor
         cachePath = other.cachePath
@@ -180,11 +175,6 @@ class OkHttpWrapper {
 
     fun setCertsData(certs_data: List<ByteArray>?): OkHttpWrapper {
         certsData = certs_data
-        return this
-    }
-
-    fun setEnabledHttpLog(enabledHttpLog: Boolean): OkHttpWrapper {
-        isEnabledHttpLog = enabledHttpLog
         return this
     }
 
@@ -547,12 +537,6 @@ class OkHttpWrapper {
         //设置缓存
         if (responseCacheInterceptor != null) {
             builder.addInterceptor(responseCacheInterceptor!!)
-        }
-        if (isEnabledHttpLog) {
-            builder.addInterceptor(
-                HttpLoggingInterceptor()
-                    .setLevel(HttpLoggingInterceptor.Level.BODY)
-            )
         }
         if (networkInterceptors.size > 0) {
             for (networkInterceptor in networkInterceptors) {
