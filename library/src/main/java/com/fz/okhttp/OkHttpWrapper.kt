@@ -1,12 +1,3 @@
-/*
- * Copyright (C) Globalegrow E-Commerce Co. , Ltd. 2007-2018.
- * All rights reserved.
- * This software is the confidential and proprietary information
- * of Globalegrow E-Commerce Co. , Ltd. ("Confidential Information").
- * You shall not disclose such Confidential Information and shall
- * use it only in accordance with the terms of the license agreement
- * you entered into with Globalegrow.
- */
 package com.fz.okhttp
 
 import android.content.Context
@@ -40,14 +31,25 @@ import javax.net.ssl.*
  */
 class OkHttpWrapper {
     internal class CookieSave(var isAddCookie: Boolean, var cookie: Cookie)
-    internal class CookieMap(var isAddCookie: Boolean, hostOnly: Boolean, secure: Boolean, val mCookies: Array<out String>?) {
+    internal class CookieMap(
+        var isAddCookie: Boolean,
+        hostOnly: Boolean,
+        secure: Boolean,
+        val mCookies: Array<out String>?
+    ) {
         var hostOnly = false
         var secure = false
         fun hasCookies(): Boolean {
             return mCookies != null && mCookies.isNotEmpty()
         }
 
-        constructor(isAddCookie: Boolean, cookies: Array<String>?) : this(isAddCookie, false, false, cookies) {}
+        constructor(isAddCookie: Boolean, cookies: Array<String>?) : this(
+            isAddCookie,
+            false,
+            false,
+            cookies
+        ) {
+        }
 
         init {
             this.hostOnly = hostOnly
@@ -64,7 +66,6 @@ class OkHttpWrapper {
     private var isEnabledHttpLog = false
     private var securityInterceptor: Interceptor? = null
     private var responseCacheInterceptor: Interceptor? = null
-    private var netLogInterceptor: Interceptor? = null
     private var cachePath: String? = null
     private var cookieMaps: MutableList<CookieMap>? = null
     private var maxRequests = 128
@@ -84,7 +85,6 @@ class OkHttpWrapper {
         isEnabledHttpLog = other.isEnabledHttpLog
         securityInterceptor = other.securityInterceptor
         responseCacheInterceptor = other.responseCacheInterceptor
-        netLogInterceptor = other.netLogInterceptor
         cachePath = other.cachePath
         cookieMaps = other.cookieMaps
     }
@@ -163,7 +163,12 @@ class OkHttpWrapper {
         return addCookie(isAddCookie, false, false, *cookies)
     }
 
-    fun addCookie(isAddCookie: Boolean, hostOnly: Boolean, secure: Boolean, vararg cookies: String): OkHttpWrapper {
+    fun addCookie(
+        isAddCookie: Boolean,
+        hostOnly: Boolean,
+        secure: Boolean,
+        vararg cookies: String
+    ): OkHttpWrapper {
         if (cookies != null && cookies.size % 4 == 0) {
             if (cookieMaps == null) {
                 cookieMaps = ArrayList()
@@ -191,9 +196,7 @@ class OkHttpWrapper {
     }
 
     fun addInterceptor(interceptor: Interceptor?): OkHttpWrapper {
-        if (interceptor is NetLoggingInterceptor) {
-            netLogInterceptor = interceptor
-        } else if (interceptor != null) {
+        if (interceptor != null) {
             interceptors!!.add(interceptor)
         }
         return this
@@ -234,21 +237,6 @@ class OkHttpWrapper {
     @JvmOverloads
     fun timeoutInterceptor(interceptor: Interceptor = TimeoutInterceptor()): OkHttpWrapper {
         interceptors!!.add(interceptor)
-        return this
-    }
-
-    /**
-     * 日志拦截器
-     *
-     * @param callback 动态参数获取接口
-     * @author dingpeihua
-     * @date 2019/9/2 18:02
-     * @version 1.0
-     */
-    fun netLogInterceptor(callback: OnDynamicParamCallback?): OkHttpWrapper {
-        if (callback != null) {
-            netLogInterceptor = NetLoggingInterceptor(callback)
-        }
         return this
     }
 
@@ -347,7 +335,10 @@ class OkHttpWrapper {
     /**
      * @see [okhttp3.OkHttpClient.Builder.sslSocketFactory]
      */
-    fun sslSocketFactory(sslSocketFactory: SSLSocketFactory?, trustManager: X509TrustManager?): OkHttpWrapper {
+    fun sslSocketFactory(
+        sslSocketFactory: SSLSocketFactory?,
+        trustManager: X509TrustManager?
+    ): OkHttpWrapper {
         if (sslSocketFactory != null && trustManager != null) {
             builder.sslSocketFactory(sslSocketFactory, trustManager)
         }
@@ -545,9 +536,6 @@ class OkHttpWrapper {
                 e.printStackTrace()
             }
         }
-        if (netLogInterceptor != null) {
-            builder.addInterceptor(netLogInterceptor!!)
-        }
         if (securityInterceptor != null) {
             builder.addInterceptor(securityInterceptor!!)
         }
@@ -561,8 +549,10 @@ class OkHttpWrapper {
             builder.addInterceptor(responseCacheInterceptor!!)
         }
         if (isEnabledHttpLog) {
-            builder.addInterceptor(HttpLoggingInterceptor()
-                    .setLevel(HttpLoggingInterceptor.Level.BODY))
+            builder.addInterceptor(
+                HttpLoggingInterceptor()
+                    .setLevel(HttpLoggingInterceptor.Level.BODY)
+            )
         }
         if (networkInterceptors.size > 0) {
             for (networkInterceptor in networkInterceptors) {
@@ -597,7 +587,10 @@ class OkHttpWrapper {
                 while (i < size) {
                     val certificate = certificates[i]
                     val certificateAlias = (i++).toString()
-                    keyStore.setCertificateEntry(certificateAlias, certificateFactory.generateCertificate(certificate))
+                    keyStore.setCertificateEntry(
+                        certificateAlias,
+                        certificateFactory.generateCertificate(certificate)
+                    )
                     if (certificate != null) {
                         certificate.close()
                     }
@@ -606,7 +599,8 @@ class OkHttpWrapper {
                 e.printStackTrace()
             }
             val sslContext = SSLContext.getInstance("TLS")
-            val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+            val trustManagerFactory =
+                TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
             trustManagerFactory.init(keyStore)
             val trustManagers = trustManagerFactory.trustManagers
             sslContext.init(null, trustManagers, SecureRandom())
@@ -617,7 +611,10 @@ class OkHttpWrapper {
         }
     }
 
-    @Deprecated("use OkHttpWrapper.clone()", ReplaceWith("OkHttpWrapper.clone()", "com.fz.okhttp.OkHttpWrapper"))
+    @Deprecated(
+        "use OkHttpWrapper.clone()",
+        ReplaceWith("OkHttpWrapper.clone()", "com.fz.okhttp.OkHttpWrapper")
+    )
     fun clone(): OkHttpWrapper {
         return OkHttpWrapper(this)
     }
@@ -644,9 +641,9 @@ class OkHttpWrapper {
                         val name = values[i + 2]
                         val value = values[i + 3]
                         val builder = Cookie.Builder()
-                                .path(path)
-                                .name(name)
-                                .value(value)
+                            .path(path)
+                            .name(name)
+                            .value(value)
                         if (cookieMap.hostOnly) {
                             builder.hostOnlyDomain(domain)
                         } else {
@@ -668,6 +665,7 @@ class OkHttpWrapper {
 
     companion object {
         private const val defaultTimeout: Long = 20000
+
         @JvmStatic
         fun newBuilder(context: Context?): OkHttpWrapper {
             if (context == null) {
