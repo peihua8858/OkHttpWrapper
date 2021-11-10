@@ -1,6 +1,5 @@
 package com.fz.okhttp
 
-import android.content.Context
 import com.fz.okhttp.params.OkRequestParams
 import com.fz.okhttp.utils.Util
 import okhttp3.*
@@ -26,10 +25,6 @@ class OkHttpProxy : IOkHttpProxy {
     private constructor() : this(OkHttpClient())
     private constructor(mHttpClient: OkHttpClient) {
         this.mHttpClient = mHttpClient
-    }
-
-    constructor(context: Context) {
-        mHttpClient = OkHttpWrapper.newBuilder(context.applicationContext).build()
     }
 
     private var httpClient: OkHttpClient
@@ -330,16 +325,6 @@ class OkHttpProxy : IOkHttpProxy {
 
     companion object {
         private var okHttpProxy: OkHttpProxy? = null
-        private fun init(context: Context): OkHttpProxy? {
-            if (okHttpProxy == null) {
-                synchronized(OkHttpProxy::class.java) {
-                    if (okHttpProxy == null) {
-                        okHttpProxy = OkHttpProxy(context)
-                    }
-                }
-            }
-            return okHttpProxy
-        }
 
         private fun init(): OkHttpProxy? {
             if (okHttpProxy == null) {
@@ -352,11 +337,13 @@ class OkHttpProxy : IOkHttpProxy {
             return okHttpProxy
         }
 
+        @JvmStatic
         val instance: OkHttpProxy?
             get() = if (okHttpProxy == null) init() else okHttpProxy
 
-        fun getInstance(context: Context): OkHttpProxy? {
-            return if (okHttpProxy == null) init(context) else okHttpProxy
+        @JvmStatic
+        fun getInstance(okhttpClient: OkHttpClient): OkHttpProxy? {
+            return if (okHttpProxy == null) OkHttpProxy(okhttpClient) else okHttpProxy
         }
     }
 }
