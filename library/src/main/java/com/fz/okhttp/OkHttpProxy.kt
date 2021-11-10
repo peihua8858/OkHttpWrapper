@@ -23,7 +23,7 @@ class OkHttpProxy : IOkHttpProxy {
     private var mHttpClient: OkHttpClient?
 
     private constructor() : this(OkHttpClient())
-    private constructor(mHttpClient: OkHttpClient) {
+    constructor(mHttpClient: OkHttpClient) {
         this.mHttpClient = mHttpClient
     }
 
@@ -32,6 +32,10 @@ class OkHttpProxy : IOkHttpProxy {
         set(okHttpClient) {
             mHttpClient = okHttpClient
         }
+
+    fun setOkHttpClient(okHttpClient: OkHttpClient) {
+        this.mHttpClient = okHttpClient
+    }
 
     fun <T> post(url: String, json: String, contentType: String, callback: OkCallback<T>) {
         post(url, json, null, contentType, callback)
