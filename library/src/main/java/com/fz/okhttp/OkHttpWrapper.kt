@@ -155,7 +155,7 @@ class OkHttpWrapper {
      * @version 1.0
      */
     fun addCookie(isAddCookie: Boolean, hostOnly: Boolean, vararg cookies: String): OkHttpWrapper {
-        return addCookie(isAddCookie, false, false, *cookies)
+        return addCookie(isAddCookie, hostOnly, false, *cookies)
     }
 
     fun addCookie(
@@ -164,7 +164,7 @@ class OkHttpWrapper {
         secure: Boolean,
         vararg cookies: String
     ): OkHttpWrapper {
-        if (cookies != null && cookies.size % 4 == 0) {
+        if (cookies.isNotEmpty() && cookies.size % 4 == 0) {
             if (cookieMaps == null) {
                 cookieMaps = ArrayList()
             }
@@ -179,7 +179,7 @@ class OkHttpWrapper {
     }
 
     fun addInterceptor(vararg interceptor: Interceptor?): OkHttpWrapper {
-        if (interceptor != null) {
+        if (interceptor.isNotEmpty()) {
             interceptors!!.addAll(ArrayList(Arrays.asList(*interceptor)))
         }
         return this
@@ -575,9 +575,7 @@ class OkHttpWrapper {
                         certificateAlias,
                         certificateFactory.generateCertificate(certificate)
                     )
-                    if (certificate != null) {
-                        certificate.close()
-                    }
+                    certificate.close()
                 }
             } catch (e: IOException) {
                 e.printStackTrace()

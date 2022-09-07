@@ -484,7 +484,7 @@ open class OkRequestParams() : Serializable {
                     builder.addFormDataPart(
                         key, value.customFileName,
                         value.file.asRequestBody(
-                            value.contentType?.toMediaType(),
+                            value.contentType.toMediaType(),
                         )
                     )
                 }

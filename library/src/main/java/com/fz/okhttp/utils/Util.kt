@@ -30,10 +30,10 @@ object Util {
     @JvmStatic
     fun getSuperclassTypeParameter(subclass: Class<*>): Type {
         val superclass = subclass.genericSuperclass
-        if (superclass is Class<*>) {
+        if (superclass !is ParameterizedType) {
             throw RuntimeException("Missing type parameter.")
         }
-        return getParameterUpperBound(0, superclass as ParameterizedType)
+        return getParameterUpperBound(0, superclass)
     }
 
     /**
