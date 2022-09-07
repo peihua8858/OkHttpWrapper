@@ -3,8 +3,8 @@ package com.fz.okhttp.interceptor
 import com.fz.okhttp.params.TimeoutRequestBody
 import com.socks.library.KLog
 import okhttp3.*
+import okio.Buffer
 import java.io.IOException
-import java.util.*
 import java.util.concurrent.TimeUnit
 
 /**
@@ -58,6 +58,39 @@ class TimeoutInterceptor : Interceptor {
                 }
                 request = addHeaders(request.newBuilder(), headers)
                         .post(builder.build()).build()
+            }
+            is MultipartBody->{
+                try {
+                    val multipartBody = request.body as MultipartBody?
+                    val partList: List<MultipartBody.Part>? = multipartBody?.parts
+                    partList?.forEach { part->
+                        val headerValue: String? = part.headers?.get(part.headers!!.name(0))
+                        headerValue?.let {
+                            val formData = headerValue.split(";").toTypedArray()
+                            for (data in formData) {
+                                if (data.contains("=")) {
+                                    val nameValue = data.split("=").toTypedArray()
+                                    if(nameValue[0].trim() == "name"){
+                                        var key = nameValue[1].replace("\"", "")
+                                        when(key){
+                                            READ_TIMEOUT -> {
+                                                readTimeout = toInteger(bodyToString(part.body), chain.readTimeoutMillis())
+                                            }
+                                            WRITE_TIMEOUT-> {
+                                                writeTimeout = toInteger(bodyToString(part.body), chain.writeTimeoutMillis())
+                                            }
+                                            CONNECT_TIMEOUT-> {
+                                                connectTimeout = toInteger(bodyToString(part.body), chain.connectTimeoutMillis())
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (e: java.lang.Exception) {
+                    e.printStackTrace()
+                }
             }
             else -> {
                 val connectNew = request.header(CONNECT_TIMEOUT)
@@ -120,6 +153,16 @@ class TimeoutInterceptor : Interceptor {
     private fun addHeader(builder: Request.Builder, name: String, value: String): Request.Builder {
         builder.addHeader(name, value)
         return builder
+    }
+
+    private fun bodyToString(request: RequestBody?): String? {
+        return try {
+            val buffer = Buffer()
+            if (request != null) request.writeTo(buffer) else return ""
+            buffer.readUtf8()
+        } catch (e: IOException) {
+            "did not work"
+        }
     }
 
     companion object {
