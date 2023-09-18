@@ -21,9 +21,9 @@ import java.io.*
  * @date 2020/6/30 19:36
  */
 class OkHttpCallback<T> @JvmOverloads constructor(
-        callback: OkCallback<T>?,
-        private val mGson: Gson = GsonFactory.createDefaultBuild()
-                .setLenient().create(),
+    callback: OkCallback<T>?,
+    private val mGson: Gson = GsonFactory.createDefaultBuild()
+        .setLenient().create(),
 ) : Callback {
     private val callback: OkCallback<T>? = callback
     private var adapter: TypeAdapter<T>? = null

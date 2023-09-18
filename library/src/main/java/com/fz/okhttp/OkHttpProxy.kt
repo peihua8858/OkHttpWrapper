@@ -374,7 +374,7 @@ class OkHttpProxy : IOkHttpProxy {
 fun <T> String.postData(
     url: String,
     mediaType: MediaType = MediaTypeUtil.JSON_MEDIA_TYPE,
-    headers: Headers? = null, okHttpCallback: OkHttpCallback<T>
+    headers: Headers? = null, callback: OkHttpCallback<T>
 ) {
     val builder = Request.Builder()
         .url(url)
@@ -383,7 +383,7 @@ fun <T> String.postData(
         builder.headers(headers)
     }
     val request: Request = builder.build() //创建Request 对象
-    OkHttpProxy.instance.newCall(request).enqueue(okHttpCallback)
+    OkHttpProxy.instance.newCall(request).enqueue(callback)
 }
 
 fun String.postData(
@@ -401,22 +401,68 @@ fun String.postData(
     return OkHttpProxy.instance.newCall(request).execute()
 }
 
-fun <T> String.getData(json: String, headers: Headers? = null, okHttpCallback: OkHttpCallback<T>) {
+
+fun <T> HttpUrl.getData(headers: Headers? = null, callback: OkHttpCallback<T>) {
     val builder = Request.Builder()
-        .url(this)
+    builder.url(this)
     if (headers != null && headers.size > 0) {
         builder.headers(headers)
     }
     val request: Request = builder.get().build() //创建Request 对象
-    OkHttpProxy.instance.newCall(request).enqueue(okHttpCallback)
+    OkHttpProxy.instance.newCall(request).enqueue(callback)
 }
 
-fun String.getData(headers: Headers? = null): Response {
+fun HttpUrl.getData(headers: Headers? = null): Response {
     val builder = Request.Builder()
-        .url(this)
+    builder.url(this)
     if (headers != null && headers.size > 0) {
         builder.headers(headers)
     }
     val request: Request = builder.get().build() //创建Request 对象
     return OkHttpProxy.instance.newCall(request).execute()
+}
+
+fun <T> String.getData(
+    params: Map<String, String>? = null,
+    headers: Headers? = null,
+    callback: OkHttpCallback<T>
+) {
+    val httpUrl = toHttpUrl(params)
+    if (httpUrl != null) {
+        httpUrl.getData(headers, callback)
+    } else {
+        val builder = Request.Builder().url(this)
+        if (headers != null && headers.size > 0) {
+            builder.headers(headers)
+        }
+        val request: Request = builder.get().build() //创建Request 对象
+        OkHttpProxy.instance.newCall(request).enqueue(callback)
+    }
+}
+
+fun String.getData(params: Map<String, String>? = null, headers: Headers? = null): Response {
+    val httpUrl = toHttpUrl(params)
+    return if (httpUrl != null) {
+        httpUrl.getData(headers)
+    } else {
+        val builder = Request.Builder()
+        builder.url(this)
+        if (headers != null && headers.size > 0) {
+            builder.headers(headers)
+        }
+        val request: Request = builder.get().build() //创建Request 对象
+        OkHttpProxy.instance.newCall(request).execute()
+    }
+}
+
+private fun String.toHttpUrl(params: Map<String, String>?): HttpUrl? {
+    val httpUrlBuilder = this.toHttpUrlOrNull()?.newBuilder()
+    if (httpUrlBuilder != null) {
+        if (!params.isNullOrEmpty()) {
+            for (item in params) {
+                httpUrlBuilder.addEncodedQueryParameter(item.key, item.value)
+            }
+        }
+    }
+    return httpUrlBuilder?.build()
 }
