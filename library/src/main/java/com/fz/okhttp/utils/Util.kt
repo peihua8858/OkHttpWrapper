@@ -71,7 +71,7 @@ object Util {
     }
     @JvmStatic
     fun buildGetParams(httpBuilder: HttpUrl.Builder, params: Map<String, Any?>?) {
-        if (params != null && params.isNotEmpty()) {
+        if (!params.isNullOrEmpty()) {
             val iterator = params.entries.iterator()
             while (iterator.hasNext()) {
                 val entry = iterator.next()

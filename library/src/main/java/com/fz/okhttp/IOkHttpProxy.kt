@@ -1,6 +1,8 @@
 package com.fz.okhttp
 
 import com.fz.okhttp.params.OkRequestParams
+import okhttp3.Call
+import okhttp3.Request
 import okhttp3.Response
 import java.util.*
 
@@ -12,6 +14,7 @@ import java.util.*
  * @date 2020/7/1 15:20
  */
 interface IOkHttpProxy {
+    fun newCall(request: Request): Call
     operator fun <T> get(url: String, callback: OkCallback<T>?)
     fun <T> syncGet(url: String): Response?
     fun <T> syncGet(url: String, callback: OkCallback<T>?): Response?

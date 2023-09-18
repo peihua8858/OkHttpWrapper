@@ -1,16 +1,24 @@
 package com.fz.okhttp
 
+import androidx.annotation.MainThread
 import com.fz.okhttp.params.OkRequestParams
 import com.fz.okhttp.utils.Util
-import okhttp3.*
+import okhttp3.Call
+import okhttp3.Headers
 import okhttp3.Headers.Companion.toHeaders
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import java.io.File
 import java.io.IOException
-import java.util.*
 
 /**
  * OkHttp请求代理
@@ -20,7 +28,7 @@ import java.util.*
  * @date 2020/6/30 20:17
  */
 class OkHttpProxy : IOkHttpProxy {
-    private var mHttpClient: OkHttpClient?
+    private var mHttpClient: OkHttpClient
 
     private constructor() : this(OkHttpClient())
     constructor(mHttpClient: OkHttpClient) {
@@ -28,11 +36,12 @@ class OkHttpProxy : IOkHttpProxy {
     }
 
     private var httpClient: OkHttpClient
-        get() = if (mHttpClient == null) OkHttpClient().also { mHttpClient = it } else mHttpClient!!
+        get() = mHttpClient
         set(okHttpClient) {
             mHttpClient = okHttpClient
         }
 
+    @MainThread
     fun setOkHttpClient(okHttpClient: OkHttpClient) {
         this.mHttpClient = okHttpClient
     }
@@ -42,16 +51,16 @@ class OkHttpProxy : IOkHttpProxy {
     }
 
     private fun <T> request(
-            builder: Request.Builder,
-            headers: Map<String, String>?, callback: OkCallback<T>?,
+        builder: Request.Builder,
+        headers: Map<String, String>?, callback: OkCallback<T>?,
     ) {
         addHeaders(headers, builder)
         httpClient.newCall(builder.build()).enqueue(OkHttpCallback(callback))
     }
 
     private fun <T> syncRequest(
-            builder: Request.Builder,
-            headers: Map<String, String>?, callback: OkCallback<T>?,
+        builder: Request.Builder,
+        headers: Map<String, String>?, callback: OkCallback<T>?,
     ): Response {
         addHeaders(headers, builder)
         try {
@@ -66,8 +75,8 @@ class OkHttpProxy : IOkHttpProxy {
             e.printStackTrace()
         }
         return Response.Builder()
-                .code(400)
-                .build()
+            .code(400)
+            .build()
     }
 
     private fun addHeaders(headers: Map<String, String>?, builder: Request.Builder) {
@@ -133,8 +142,8 @@ class OkHttpProxy : IOkHttpProxy {
     }
 
     override fun <T> get(
-            url: String, params: Map<String, Any?>?, headers: HashMap<String, String>?,
-            callback: OkCallback<T>?,
+        url: String, params: Map<String, Any?>?, headers: HashMap<String, String>?,
+        callback: OkCallback<T>?,
     ) {
         val builder = Request.Builder()
         val httpUrl = url.toHttpUrlOrNull()
@@ -146,7 +155,12 @@ class OkHttpProxy : IOkHttpProxy {
         request(builder.get(), headers, callback)
     }
 
-    override fun <T> syncGet(url: String, params: Map<String, Any?>?, headers: HashMap<String, String>?, callback: OkCallback<T>?): Response {
+    override fun <T> syncGet(
+        url: String,
+        params: Map<String, Any?>?,
+        headers: HashMap<String, String>?,
+        callback: OkCallback<T>?
+    ): Response {
         val builder = Request.Builder()
         val httpUrl = url.toHttpUrlOrNull()
         if (httpUrl != null) {
@@ -155,6 +169,10 @@ class OkHttpProxy : IOkHttpProxy {
             builder.url(httpBuilder.build())
         }
         return syncRequest(builder.get(), headers, callback)
+    }
+
+    override fun newCall(request: Request): Call {
+        return httpClient.newCall(request)
     }
 
     override fun <T> post(url: String, params: OkRequestParams, callback: OkCallback<T>?) {
@@ -190,8 +208,8 @@ class OkHttpProxy : IOkHttpProxy {
     }
 
     override fun <T> post(
-            url: String, params: Map<String, Any?>, headers: HashMap<String, String>?,
-            callback: OkCallback<T>?,
+        url: String, params: Map<String, Any?>, headers: HashMap<String, String>?,
+        callback: OkCallback<T>?,
     ) {
         val builder = Request.Builder()
         builder.url(url)
@@ -200,8 +218,8 @@ class OkHttpProxy : IOkHttpProxy {
     }
 
     override fun <T> post(
-            url: String, json: String, headers: HashMap<String, String>?,
-            contentType: String?, callback: OkCallback<T>?,
+        url: String, json: String, headers: HashMap<String, String>?,
+        contentType: String?, callback: OkCallback<T>?,
     ) {
         val builder = Request.Builder()
         builder.url(url)
@@ -209,7 +227,13 @@ class OkHttpProxy : IOkHttpProxy {
         request(builder, headers, callback)
     }
 
-    override fun <T> syncPost(url: String, json: String, headers: HashMap<String, String>?, contentType: String?, callback: OkCallback<T>?): Response {
+    override fun <T> syncPost(
+        url: String,
+        json: String,
+        headers: HashMap<String, String>?,
+        contentType: String?,
+        callback: OkCallback<T>?
+    ): Response {
         val builder = Request.Builder()
         builder.url(url)
         builder.post(json.toRequestBody(contentType?.toMediaType()))
@@ -233,8 +257,8 @@ class OkHttpProxy : IOkHttpProxy {
     }
 
     override fun <T> delete(
-            url: String, json: String?, headers: HashMap<String, String>?,
-            contentType: String?, callback: OkCallback<T>?,
+        url: String, json: String?, headers: HashMap<String, String>?,
+        contentType: String?, callback: OkCallback<T>?,
     ) {
         val builder = Request.Builder()
         builder.url(url)
@@ -245,8 +269,8 @@ class OkHttpProxy : IOkHttpProxy {
     }
 
     override fun <T> delete(
-            url: String, params: Map<String, Any?>?, headers: HashMap<String, String>?,
-            callback: OkCallback<T>?,
+        url: String, params: Map<String, Any?>?, headers: HashMap<String, String>?,
+        callback: OkCallback<T>?,
     ) {
         val builder = Request.Builder()
         builder.url(url)
@@ -255,8 +279,8 @@ class OkHttpProxy : IOkHttpProxy {
     }
 
     override fun <T> syncDelete(
-            url: String, params: Map<String, Any?>?,
-            headers: HashMap<String, String>?, callback: OkCallback<T>?,
+        url: String, params: Map<String, Any?>?,
+        headers: HashMap<String, String>?, callback: OkCallback<T>?,
     ): Response {
         val builder = Request.Builder()
         builder.url(url)
@@ -279,8 +303,8 @@ class OkHttpProxy : IOkHttpProxy {
     }
 
     override fun <T> put(
-            url: String, json: String, headers: HashMap<String, String>?,
-            contentType: String?, callback: OkCallback<T>?,
+        url: String, json: String, headers: HashMap<String, String>?,
+        contentType: String?, callback: OkCallback<T>?,
     ) {
         val builder = Request.Builder()
         builder.url(url)
@@ -289,8 +313,8 @@ class OkHttpProxy : IOkHttpProxy {
     }
 
     override fun <T> put(
-            url: String, params: Map<String, Any?>, headers: HashMap<String, String>?,
-            callback: OkCallback<T>?,
+        url: String, params: Map<String, Any?>, headers: HashMap<String, String>?,
+        callback: OkCallback<T>?,
     ) {
         val builder = Request.Builder()
         builder.url(url)
@@ -298,7 +322,12 @@ class OkHttpProxy : IOkHttpProxy {
         request(builder, headers, callback)
     }
 
-    override fun <T> syncPut(url: String, params: Map<String, Any?>, headers: HashMap<String, String>?, callback: OkCallback<T>?): Response {
+    override fun <T> syncPut(
+        url: String,
+        params: Map<String, Any?>,
+        headers: HashMap<String, String>?,
+        callback: OkCallback<T>?
+    ): Response {
         val builder = Request.Builder()
         builder.url(url)
         builder.put(buildRequestBody(params))
@@ -328,26 +357,66 @@ class OkHttpProxy : IOkHttpProxy {
     }
 
     companion object {
-        private var okHttpProxy: OkHttpProxy? = null
+        private var okHttpProxy: OkHttpProxy = OkHttpProxy()
 
-        private fun init(): OkHttpProxy? {
-            if (okHttpProxy == null) {
-                synchronized(OkHttpProxy::class.java) {
-                    if (okHttpProxy == null) {
-                        okHttpProxy = OkHttpProxy()
-                    }
-                }
-            }
+        @JvmStatic
+        val instance: OkHttpProxy
+            get() = okHttpProxy
+
+        @JvmStatic
+        fun getInstance(okhttpClient: OkHttpClient): OkHttpProxy {
+            okHttpProxy.setOkHttpClient(okhttpClient)
             return okHttpProxy
         }
-
-        @JvmStatic
-        val instance: OkHttpProxy?
-            get() = if (okHttpProxy == null) init() else okHttpProxy
-
-        @JvmStatic
-        fun getInstance(okhttpClient: OkHttpClient): OkHttpProxy? {
-            return if (okHttpProxy == null) OkHttpProxy(okhttpClient) else okHttpProxy
-        }
     }
+}
+
+fun <T> String.postData(
+    url: String,
+    mediaType: MediaType = MediaTypeUtil.JSON_MEDIA_TYPE,
+    headers: Headers? = null, okHttpCallback: OkHttpCallback<T>
+) {
+    val builder = Request.Builder()
+        .url(url)
+        .post(this.toRequestBody(mediaType))
+    if (headers != null && headers.size > 0) {
+        builder.headers(headers)
+    }
+    val request: Request = builder.build() //创建Request 对象
+    OkHttpProxy.instance.newCall(request).enqueue(okHttpCallback)
+}
+
+fun String.postData(
+    url: String,
+    mediaType: MediaType = MediaTypeUtil.JSON_MEDIA_TYPE,
+    headers: Headers? = null
+): Response {
+    val builder = Request.Builder()
+        .url(url)
+    if (headers != null && headers.size > 0) {
+        builder.headers(headers)
+    }
+
+    val request: Request = builder.post(this.toRequestBody(mediaType)).build() //创建Request 对象
+    return OkHttpProxy.instance.newCall(request).execute()
+}
+
+fun <T> String.getData(json: String, headers: Headers? = null, okHttpCallback: OkHttpCallback<T>) {
+    val builder = Request.Builder()
+        .url(this)
+    if (headers != null && headers.size > 0) {
+        builder.headers(headers)
+    }
+    val request: Request = builder.get().build() //创建Request 对象
+    OkHttpProxy.instance.newCall(request).enqueue(okHttpCallback)
+}
+
+fun String.getData(headers: Headers? = null): Response {
+    val builder = Request.Builder()
+        .url(this)
+    if (headers != null && headers.size > 0) {
+        builder.headers(headers)
+    }
+    val request: Request = builder.get().build() //创建Request 对象
+    return OkHttpProxy.instance.newCall(request).execute()
 }
